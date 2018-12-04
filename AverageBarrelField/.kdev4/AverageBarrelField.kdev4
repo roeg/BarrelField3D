@@ -1,0 +1,14 @@
+[Buildset]
+BuildItems=@Variant(\x00\x00\x00\t\x00\x00\x00\x00\x01\x00\x00\x00\x0b\x00\x00\x00\x00\x01\x00\x00\x00$\x00A\x00v\x00e\x00r\x00a\x00g\x00e\x00B\x00a\x00r\x00r\x00e\x00l\x00F\x00i\x00e\x00l\x00d)
+
+[CMake]
+Build Directory Count=1
+CMakeDir=/usr/share/cmake/Modules
+Current Build Directory Index=0
+ProjectRootRelative=./
+
+[CMake][CMake Build Directory 0]
+Build Directory Path=file:///home/regger/project_src/BarrelField3D/AverageBarrelField/build
+
+[Project]
+VersionControlSupport=kdevsubversion

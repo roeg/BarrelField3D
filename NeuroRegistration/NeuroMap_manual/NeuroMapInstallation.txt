@@ -1,0 +1,71 @@
+NeuroMap installation MPFI
+
+(1) checkout svn repository
+
+Check out the BarrelField3D svn repository. Got to a directory of your choice and do:
+
+	svn co https://10.1.100.49/svn-repository/BarrelField3D
+	
+	it will ask for user/password; try the NeuroCount user/password,
+	let me know in case that doesn't work.
+
+(2) adjust paths in source code
+
+Open the file BarrelField3D/common/barrel_field.cpp
+Go to the function
+
+	void BarrelField::readStandardBarrelField() (line 548)
+
+Change the path names to the absolute path pointing to the standard barrel field files, e.g.
+
+	const char * bfName = "/home/regger/project_src/BarrelField3D/common/average_barrel_field_complete_S1.am";
+	
+	changes to
+	const char * bfName = "/path/to/your/installation/BarrelField3D/common/average_barrel_field_complete_S1.am";
+
+Do this for the seven paths pointing to the files making up the standard barrel field.
+
+(3) configure build
+
+ssh into golgi (simply ssh -X golgi should do it).
+Go into the BarrelField3D/NeuroRegistration directory and run:
+
+	ccmake .
+
+This starts the cmake configuration dialog (for more info see http://www.cmake.org/).
+Press 'c' to configure. It will do some stuff and then probably give you an error message.
+Just press 'e' to get back to the main screen. Now, you can edit the configuration parameters
+by moving up and down with the arrow keys and pressing 'enter' and typing to change an entry.
+Toggle more options with 't'.
+
+The options that you need to set now are (if they're not set yet):
+
+	CMAKE_BUILD_TYPE	Release
+	GSL_CONFIG			/usr/bin/gsl-config
+	ITK_DIR				/usr/local/lib/InsightToolkit
+	VTK_DIR				/usr/local/VTK-bin-icc/lib/vtk-5.6
+	CMAKE_CXX_COMPILER	/usr/local/intel/bin/intel64/icpc
+
+Now, hit 'c' again to re-configure. In case there are new error messages,
+go back to the main menu with 'e' as above, make sure the options are still set correctly
+(it sometimes changes them again...) and do this back and forth until you see the option
+to press 'g' at the bottom. Now, press 'g' to generate the makefile and exit.
+
+(4) compiling
+
+ssh into golgi if you haven't done so.
+Start a bash shell if you're not already in one:
+
+	bash
+
+Load all intel shared libraries:
+
+	source /usr/local/intel/bin/iccvars.sh intel64
+(NB: this also needs to be done when you want to run the compiled programs,
+but you probably already know that.)
+
+Go into the BarrelField3D/NeuroRegistration directory and run:
+
+	make [-j8; optional for parallel compilation] NeuroRegistration
+
+Done!
