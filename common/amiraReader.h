@@ -44,6 +44,8 @@ class Reader
 		// alternate method for writing Amira SpatialGraph files
 		void writeSpatialGraphFileFromEdges();
 		
+		void readObjectLineFile();
+		
 		// default method for loading SpatialGraphSets
 		static void readSpatialGraphSetFile(const char * fname, std::vector< unsigned int >& originalGraphIndices,
 										std::vector< unsigned int >& spatialGraphSetLabels, std::vector< double * >& spatialGraphTransforms,
@@ -72,6 +74,8 @@ class Reader
 		void readLandmarkFile(bool applyTransform);
 		// default method for writing Amira Landmark files
 		void writeLandmarkFile(PointsPointerType pts);
+		// method for writing Amira Landmark files with one point attribute
+		void writeLandmarkAttributeFile(std::vector< std::vector< double > > ptList);
 		
 		// default method for reading Amira scalar field files
 		ImageDataPointerType readScalarField();

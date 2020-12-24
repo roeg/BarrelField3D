@@ -219,30 +219,44 @@ void Reader::readSpatialGraphFile(bool applyTransform)
 					if(parameters && currentLine.find("TransformationMatrix ", 0) != std::string::npos)
 					{
 // 						std::cout << "found correct section transform parameters!" << std::endl;
-						unsigned int count = 0;
-						std::string::size_type loc1, loc2, loc3;
-						loc1 = currentLine.find_first_of(numbers, 0);
-						loc2 = currentLine.find_first_of(signs, 0);
-						if(loc2 != std::string::npos)
-							if(loc2 < loc1)
-								loc1 = loc2;
-						loc2 = currentLine.find_first_of(whitespace, loc1 + 1);	//ignores last value: is always 1 anyways
-						while(loc2 != std::string::npos && count < 16)
+// 						unsigned int count = 0;
+// 						std::string::size_type loc1, loc2, loc3;
+// 						loc1 = currentLine.find_first_of(numbers, 0);
+// 						loc2 = currentLine.find_first_of(signs, 0);
+// 						if(loc2 != std::string::npos)
+// 							if(loc2 < loc1)
+// 								loc1 = loc2;
+// 						loc2 = currentLine.find_first_of(whitespace, loc1 + 1);	//ignores last value: is always 1 anyways
+// 						while(loc2 != std::string::npos && count < 16)
+// 						{
+// 							char * tmp1 = new char[loc2 - loc1];
+// 							currentLine.copy(tmp1, loc2 - loc1, loc1);
+// 							double ftmp1 = atof(tmp1);
+// 							transformation[count%4][count/4]= ftmp1;	// amira files are columns after each other
+// 							loc3 = loc2;
+// 							loc1 = currentLine.find_first_of(numbers, loc3);
+// 							loc2 = currentLine.find_first_of(signs, loc3);
+// 							if(loc2 != std::string::npos)
+// 								if(loc2 < loc1)
+// 									loc1 = loc2;
+// 							loc2 = currentLine.find_first_of(whitespace, loc1 + 1);
+// 							++count;
+// 							delete [] tmp1;
+// 						}
+						
+						const char * dumpChars = new char[128];
+						double * tmpTransform = new double[16];
+						sscanf(currentLine.c_str(), " %s %lf %lf %lf %lf %lf %lf %lf %lf %lf %lf %lf %lf %lf %lf %lf %lf ",
+							dumpChars, tmpTransform, tmpTransform+1, tmpTransform+2, tmpTransform+3, tmpTransform+4, tmpTransform+5, tmpTransform+6, tmpTransform+7,
+							tmpTransform+8, tmpTransform+9, tmpTransform+10, tmpTransform+11, tmpTransform+12, tmpTransform+13, tmpTransform+14, tmpTransform+15);
+						for(int m = 0; m < 4; ++m)
 						{
-							char * tmp1 = new char[loc2 - loc1];
-							currentLine.copy(tmp1, loc2 - loc1, loc1);
-							double ftmp1 = atof(tmp1);
-							transformation[count%4][count/4]= ftmp1;	// amira files are columns after each other
-							loc3 = loc2;
-							loc1 = currentLine.find_first_of(numbers, loc3);
-							loc2 = currentLine.find_first_of(signs, loc3);
-							if(loc2 != std::string::npos)
-								if(loc2 < loc1)
-									loc1 = loc2;
-							loc2 = currentLine.find_first_of(whitespace, loc1 + 1);
-							++count;
-							delete [] tmp1;
+							for(int n = 0; n < 4; ++n)
+							{
+								transformation[m][n] = tmpTransform[4*n+m];
+							}
 						}
+						
 // 						std::cout << "transformation matrix:" << std::endl;
 // 						for(int ii = 0; ii < 4; ++ii)
 // 						{
@@ -257,12 +271,12 @@ void Reader::readSpatialGraphFile(bool applyTransform)
 // 							std::cout << "]" << std::endl;
 // 						}
 						//remove numeric artifacts from z-axis:
-						for(int ii = 0; ii < 2; ++ii)
-						{
-							transformation[2][ii] = 0;
-							transformation[ii][2] = 0;
-						}
-						transformation[2][2] = 1;
+// 						for(int ii = 0; ii < 2; ++ii)
+// 						{
+// 							transformation[2][ii] = 0;
+// 							transformation[ii][2] = 0;
+// 						}
+// 						transformation[2][2] = 1;
 					}
 					loc = currentLine.find("VERTEX", 0);
 					if(loc == 0)
@@ -564,6 +578,7 @@ void Reader::readSpatialGraphFile(bool applyTransform)
 		{
 // 			inputSpatialGraph->printTransformation();
 			inputSpatialGraph->setTransformation(transformation);
+// 			inputSpatialGraph->printTransformation();
 			inputSpatialGraph->applyTransformation();
 		}
 		for(int ii = 0; ii < 4; ++ii)
@@ -1669,6 +1684,85 @@ void Reader::writeSpatialGraphFileFromEdges()
 	
 	NeuroMorphData.close();
 };
+
+void Reader::readObjectLineFile()
+{
+	std::ifstream inputStream(inputFilename);
+	if(!inputStream.fail())
+	{
+		std::vector< double * > vertices;
+		std::vector< std::vector< int > > lines;
+		std::string currentLine;
+		while(!std::getline(inputStream, currentLine).eof() /*&& line < 100*/)
+		{
+			if(currentLine.find("v", 0) == 0)
+			{
+				char idChar[4];
+				double vertex1, vertex2, vertex3;
+				sscanf(currentLine.c_str(), " %c %lf %lf %lf ", idChar, &vertex1, &vertex2, &vertex3);
+				double * vertex = new double[3];
+				vertex[0] = vertex1;
+				vertex[1] = vertex2;
+				vertex[2] = vertex3;
+// 				sscanf(currentLine.c_str(), "%c %f %f %f ", idChar, vertex, vertex+1, vertex+2);
+				vertices.push_back(vertex);
+				std::cout << currentLine.c_str() <<std::endl;
+// 				std::cout << "vertex @ [" << vertex1 << "," << vertex2 << "," << vertex3 << "]" << std::endl;
+// 				std::cout << "vertex @ [" << vertex[0] << "," << vertex[1] << "," << vertex[2] << "]" << std::endl;
+			}
+			if(currentLine.find("l", 0) == 0)
+			{
+				char idChar[1];
+				double vertex1, vertex2, vertex3;
+				unsigned int cellTypeID;
+				int startIndex = 2;
+				int nextSpace = currentLine.find(" ", startIndex);
+				std::vector< int > vertexIDs;
+				while(nextSpace != std::string::npos)
+				{
+					std::string substr(currentLine, startIndex, (nextSpace-startIndex+1));
+					int vertexID;
+					sscanf(substr.c_str(), " %d ", &vertexID);
+					vertexIDs.push_back(vertexID);
+					startIndex = nextSpace + 1;
+					nextSpace = currentLine.find(" ", startIndex);
+				}
+				
+				lines.push_back(vertexIDs);
+			}
+		}
+		
+		std::cout << lines.size() << std::endl;
+		std::cout << vertices.size() << std::endl;;
+		
+		AmiraSpatialGraph * newSG = new AmiraSpatialGraph;
+		for(int i = 0; i < lines.size(); ++i)
+		{
+			//output line vertices
+			std::flush(std::cout << "line " << i);
+			std::list< double * > edgePtList;
+			for(int j = 0; j < lines[i].size(); ++j)
+			{
+				int vertexID = lines[i][j];
+				std::flush(std::cout << " -- " << vertexID);
+				std::cout << std::endl;
+				std::cout << "vertex @ [" << vertices[vertexID-1][0] << "," << vertices[vertexID-1][1] << "," << vertices[vertexID-1][2] << "]" << std::endl;
+				edgePtList.push_back(vertices[vertexID-1]);
+			}
+			int * edgeConnectivity = new int[2];
+			edgeConnectivity[0] = newSG->getNumberOfVertices();
+			edgeConnectivity[1] = newSG->getNumberOfVertices() + 1;
+			Edge * newEdge = new Edge(edgeConnectivity, edgePtList.size(), Axon, edgePtList, 1.0);
+			Vertex * vertex1 = new Vertex(edgePtList.front(), Axon);
+			Vertex * vertex2 = new Vertex(edgePtList.back(), Axon);
+			newSG->addVertex(vertex1);
+			newSG->addVertex(vertex2);
+			newSG->addEdge(newEdge);
+			std::cout << std::endl;
+		}
+		inputSpatialGraph = newSG;
+	}
+}
 
 void Reader::readSpatialGraphSetFile(const char * fname, std::vector< unsigned int >& originalGraphIndices, std::vector< unsigned int >& spatialGraphSetLabels,
 									std::vector< double * >& spatialGraphTransforms, std::vector< std::string >& originalGraphFiles,
@@ -2997,6 +3091,39 @@ void Reader::writeLandmarkFile(PointsPointerType pts)
 		
 		outStream.close();
 	}
+};
+
+void Reader::writeLandmarkAttributeFile(std::vector< std::vector< double > > ptList)
+{
+	std::string ofName(outputFilename);
+	ofName += ".psi";
+	std::ofstream outStream(ofName.c_str());
+	outStream << "# PSI Format V1.1" << std::endl;
+	outStream << "#" << std::endl;
+	outStream << "# column[0] = \"x\"" << std::endl;
+	outStream << "# column[1] = \"y\"" << std::endl;
+	outStream << "# column[2] = \"z\"" << std::endl;
+	outStream << "# column[3] = \"Id\"" << std::endl;
+	outStream << "#" << std::endl;
+	outStream << "#" << std::endl;
+	outStream << std::endl;
+	outStream << ptList.size() << " 0 0" << std::endl;
+	outStream << std::endl;
+	// I don't know what this is but it works (not a bounding box)
+	outStream << " 0 0 0" << std::endl;
+	outStream << " 0 0 0" << std::endl;
+	outStream << " 0 0 0" << std::endl;
+	
+	for(int i = 0; i < ptList.size(); ++i)
+	{
+		for(int j = 0; j < 4; ++j)
+		{
+			outStream << " " << ptList[i][j];
+		}
+		outStream << std::endl;
+	}
+	
+	outStream.close();
 };
 
 ImageDataPointerType Reader::readScalarField()
